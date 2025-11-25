@@ -147,3 +147,17 @@ export const updateEmployee = async (req, res) => {
     return res.status(500).json({ msg: "Error updating employee" });
   }
 };
+
+
+export const getProfile  = async (req, res) => {
+      try{
+        console.log("profile")
+
+        const {employeeId} = req.user; 
+        const response = await Employee.findOne({employeeId});
+        res.send(response)
+
+      }catch(error){
+        res.status(500).json({msg: "Something went wrong"})
+      }
+}
