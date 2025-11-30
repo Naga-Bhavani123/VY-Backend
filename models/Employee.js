@@ -10,6 +10,7 @@ const employeeSchema = new mongoose.Schema({
     contactNumber: {
         type:String
     },
+    profilePhotoUrl: { type: String, default: "" },
     basicSalary: { type: Number, required: true },
     hra: { type: Number, default: 0 },
     allowances: { type: Number, default: 0 },

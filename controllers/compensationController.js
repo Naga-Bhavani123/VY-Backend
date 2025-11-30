@@ -45,12 +45,12 @@ export const getMonthlyCompensation = async (req, res) => {
     const { basicSalary, hra, allowances } = employee;
 
     const monthPadded = String(monthNum).padStart(2, "0");
-    const datePrefix = `${year}-${monthPadded}`; // "2025-11"
+    const datePrefix = `${monthPadded}/${year}`; // "2025-11"
 
     // Get attendance for that month (only APPROVED ones)
     const records = await Attendance.find({
       employeeId,
-      date: { $regex: `^${datePrefix}` },
+      date: { $regex: `${datePrefix}$` },
     });
 
     let presentDays = 0;
@@ -138,7 +138,7 @@ export const downloadPayslipPdf = async (req, res) => {
     // --- copy same logic here short version ---
     const monthNum = Number(month);
     const monthPadded = String(monthNum).padStart(2, "0");
-    const datePrefix = `${year}-${monthPadded}`;
+    const datePrefix = `${monthPadded}/${year}`;
 
     const employee = await Employee.findOne({ employeeId });
     if (!employee) {
@@ -149,7 +149,7 @@ export const downloadPayslipPdf = async (req, res) => {
 
     const records = await Attendance.find({
       employeeId,
-      date: { $regex: `^${datePrefix}` },
+      date: { $regex: `${datePrefix}$` },
     });
 
     let presentDays = 0;

@@ -1,13 +1,33 @@
 import Attendance from "../models/Attendance.js"
 
+function gettingDate(){
+    const currentDateTime = new Date(); 
+    const day = String(currentDateTime.getDate()).padStart(2, "0");
+    const month = String(currentDateTime.getMonth() + 1).padStart(2, "0");
+    const year = currentDateTime.getFullYear();
+
+    const hours = String(currentDateTime.getHours()).padStart(2, "0");
+    const minutes = String(currentDateTime.getMinutes()).padStart(2, "0");
+    const seconds = String(currentDateTime.getSeconds()).padStart(2, "0");
+    
+    const AMORPM = hours >= 12?"PM":"AM"; 
+    const conversionOf12Hours = hours % 12 ||12;
+
+    return {
+         date: `${day}/${month}/${year}`,
+         time: `${conversionOf12Hours}:${minutes}:${seconds} ${AMORPM}`
+    }
+}
+
+
 export const attendanceController = async (req, res) => {
   try {
     const user = req.user;
     const employeeId = user.employeeId;
     const { mode } = req.body;
-    const today = new Date().toLocaleDateString()
-
-    const attendance = await Attendance.findOne({ employeeId, date: today });
+    const {date, time} = gettingDate();
+    console.log(date, time)
+    const attendance = await Attendance.findOne({ employeeId, date});
 
     console.log(attendance)
     if (mode === "CHECK_IN") {
@@ -16,9 +36,9 @@ export const attendanceController = async (req, res) => {
 
       await Attendance.create({
         employeeId,
-        date: today,
+        date,
         status: "PRESENT",
-        checkInTime: new Date().toLocaleTimeString(),
+        checkInTime: time,
         isApproved: false
       });
 
@@ -30,7 +50,7 @@ export const attendanceController = async (req, res) => {
       if (attendance.checkOutTime)
         return res.status(400).json({ msg: "Already checked out"});
 
-      attendance.checkOutTime = new Date().toLocaleTimeString();
+      attendance.checkOutTime = time;
       attendance.isApproved = true;
       await attendance.save();
 
@@ -48,8 +68,8 @@ export const attendanceController = async (req, res) => {
 export const getTodayStatus = async (req, res) => {
   try {
     const employeeId = req.user.employeeId;
-    const today = new Date().toLocaleDateString()
-    const attendance = await Attendance.findOne({$and: [{ employeeId, date: today }]});
+    const {date, time} = gettingDate()
+    const attendance = await Attendance.findOne({$and: [{ employeeId, date }]});
     if (!attendance) {
       return res.json({
         nextAction: "CHECK_IN",
@@ -81,8 +101,7 @@ export const getAttendanceByMonth = async (req, res) => {
   try {
     const employeeId = req.user.employeeId; // from JWT middleware
     const { year, month } = req.query;  
-    console.log(year, month);    // month: 1–12
-
+    const { date, time} = gettingDate();
     if (!year || !month) {
       return res
         .status(400)
@@ -95,16 +114,17 @@ export const getAttendanceByMonth = async (req, res) => {
     }
 
     const monthPadded = String(monthNum).padStart(2, "0");  // "11"
-    const datePrefix = `${year}-${monthPadded}`;            // "2025-11"
+    const suffix = `${monthPadded}/${year}`;            // "2025/11"
 
     // 1) Get all records for that employee + month
     const records = await Attendance.find({
       employeeId,
-      date: { $regex: `^${datePrefix}` },   // matches "2025-11-01", "2025-11-02", ...
+      date: { $regex: `${suffix}$` },   // matches "27/11/2025", "2025-11-02", ...
     }).sort({ date: 1 });
-
+    console.log(records)
     // 2) Put into a map for quick lookup
     const mapByDate = {};
+
     records.forEach((rec) => {
       if (rec.isApproved) mapByDate[rec.date] = rec;
     });
@@ -113,16 +133,16 @@ export const getAttendanceByMonth = async (req, res) => {
     const daysInMonth = new Date(Number(year), monthNum, 0).getDate(); // last day
 
     const days = [];
-
+   
   const today = new Date();  // current full date
-
 for (let day = 1; day <= daysInMonth; day++) {
   const dayStr = String(day).padStart(2, "0");
-  const dateStr = `${year}-${monthPadded}-${dayStr}`;   // "2025-11-03"
-  const currentDate = new Date(dateStr);
-
+  const dateStr = `${dayStr}/${monthPadded}/${year}`;
+     // "03/11/2025"
+  const currentDate = new Date(`${year}-${monthPadded}-${dayStr}`);
+  
   const existing = mapByDate[dateStr];
-
+  
  if (currentDate.getDay() === 0){
   days.push({
       date: dateStr,
