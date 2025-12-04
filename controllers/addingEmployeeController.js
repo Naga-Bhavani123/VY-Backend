@@ -106,9 +106,7 @@ export const getEmployeeById = async (req, res) => {
 // PUT /employee/:employeeId
 export const updateEmployee = async (req, res) => {
   try {
-    if (!req.user || req.user.role !== "ADMIN") {
-      return res.status(403).json({ msg: "Only admin can update employees" });
-    }
+   
 
     const { employeeId } = req.params;
 
@@ -151,10 +149,9 @@ export const updateEmployee = async (req, res) => {
 
 export const getProfile  = async (req, res) => {
       try{
-        console.log("profile")
 
         const {employeeId} = req.user; 
-        const response = await Employee.findOne({employeeId});
+        const response = await Employee.findOne({employeeId}); 
         res.send(response)
 
       }catch(error){

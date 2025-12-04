@@ -3,6 +3,9 @@ import mongoose from "mongoose";
 import auth from "./routes/auth.js"
 import employee from "./routes/employee.js"
 import cors from "cors";
+import dotenv from "dotenv"
+
+dotenv.config()
 
 
 const app = express(); 
@@ -16,6 +19,7 @@ const connection = async () => {
 }
 connection()
 app.use(express.json()); 
+
 
 app.use("/auth", auth); 
 app.use("/employee", employee);
